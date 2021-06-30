@@ -4,8 +4,8 @@ This repo is forked from [kartojal/flash-loans-workshop](https://github.com/kart
 
 ## technical stack
 - [x] Aave V2 flash loans to liquidate a loan from an unhealthy borrower position.
-- [] Borrow more lucrative asset as collateral woth InstaDapp's SDK
-- [] Switch network to Mumbai(Polygon's testnet)
+- [ ] Borrow more lucrative asset as collateral woth InstaDapp's SDK
+- [ ] Switch network to Mumbai(Polygon's testnet)
 
 # Get started
 
