@@ -1,15 +1,20 @@
-# Flash loans Workshop
+# Simple Collateral Swap 
 
-This workshop serves an example about how to integrate Aave V2 flash loans to liquidate a loan from an unhealthy borrower position.
+This repo is forked from [kartojal/flash-loans-workshop](https://github.com/kartojal/flash-loans-workshop).
+
+## technical stack
+- [x] Aave V2 flash loans to liquidate a loan from an unhealthy borrower position.
+- [] Borrow more lucrative asset as collateral woth InstaDapp's SDK
+- [] Switch network to Mumbai(Polygon's testnet)
 
 # Get started
 
 Open a terminal,clone this repository and Install dependencies
 
 ```
-git clone git@github.com:kartojal/flash-loans-workshop.git
+git clone git@github.com:suricata3838/collateral-swap-aave.git
 
-cd flash-loans-workshop
+cd collateral-swap-aave
 
 yarn
 ```
