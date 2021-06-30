@@ -52,6 +52,8 @@ const loadReserves = async (userAddress, poolDataProvider) => {
     }),
   );
 
+  console.log("allUserResearves:", allUserReserves);
+
   return {
     aTokens: allUserReserves
       .filter(tuple => {
@@ -113,6 +115,13 @@ export default function Main({
     5000,
     a => JSON.parse(JSON.stringify(a)),
   );
+ 
+  console.log("totalCollateralEth:", userAccountData ? parseFloat(formatEther(userAccountData[0])): 0);
+  console.log("totalDebtETH:", userAccountData ? formatEther(userAccountData[1]): 0);
+  console.log("availableBorrowsETH:", userAccountData ? formatEther(userAccountData[2]): 0);
+  console.log("currentLiquidationThreshold:", userAccountData ? parseFloat(formatEther(userAccountData[3])): 0);
+  console.log("ltv:", userAccountData ? parseFloat(formatEther(userAccountData[4])): 0);
+  console.log("healthFactor:",userAccountData ? parseFloat(formatEther(userAccountData[5])): 0);
 
   const health = userAccountData?.length ? parseFloat(formatEther(userAccountData[5])) : 0;
   const alertType = health < 1 ? "error" : "success";
@@ -199,6 +208,7 @@ export default function Main({
             onClick={() => {
               // Prepare params
               const daiDebt = parseEther("838971");
+              console.log("format-daiDebt:", daiDebt);
 
               const encodedParams = buildFlashLiquidationAdapterParams(
                 assetData.LINK.address,
@@ -243,7 +253,7 @@ export default function Main({
             localProvider.send("hardhat_reset", [
               {
                 forking: {
-                  jsonRpcUrl: "https://eth-mainnet.alchemyapi.io/v2/h9TZx3zq0Ez_nNRahgbLy3X2cQTmHwnW",
+                  jsonRpcUrl: process.env.REACT_APP_ALCHEMY_RPC, 
                   blockNumber: 11912352,
                 },
               },

@@ -17,6 +17,7 @@ packages/subgraph/config/config.json
 /node_modules
 /.pnp
 .pnp.js
+yarn.lock
 
 # testing
 coverage
