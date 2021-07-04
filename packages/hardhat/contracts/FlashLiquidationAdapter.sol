@@ -25,6 +25,7 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
   struct LiquidationParams {
     address collateralAsset;
     address borrowedAsset;
+    address depositAsset;
     address user;
     uint256 debtToCover;
     bool useEthPath;
@@ -37,6 +38,8 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
     uint256 diffCollateralBalance;
     uint256 flashLoanDebt;
     uint256 soldAmount;
+    uint256 boughtAmount;
+    address aToken;
     uint256 remainingTokens;
     uint256 borrowedAssetLeftovers;
   }
@@ -58,6 +61,7 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
    * @param params Additional variadic field to include extra params. Expected parameters:
    *   address collateralAsset The collateral asset to release and will be exchanged to pay the flash loan premium
    *   address borrowedAsset The asset that must be covered
+   *   address depositAsset The asset to deposit after the self-liquidation
    *   address user The user address with a Health Factor below 1
    *   uint256 debtToCover The amount of debt to cover
    *   bool useEthPath Use WETH as connector path between the collateralAsset and borrowedAsset at Uniswap
@@ -75,9 +79,10 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
 
     require(assets.length == 1 && assets[0] == decodedParams.borrowedAsset, 'INCONSISTENT_PARAMS');
 
-    _liquidateAndSwap(
+    _liquidateAndSwapAndDeposit(
       decodedParams.collateralAsset,
       decodedParams.borrowedAsset,
+      decodedParams.depositAsset,
       decodedParams.user,
       decodedParams.debtToCover,
       decodedParams.useEthPath,
@@ -100,9 +105,10 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
    * @param premium Fee of the requested flash loan
    * @param initiator Address of the caller
    */
-  function _liquidateAndSwap(
+  function _liquidateAndSwapAndDeposit(
     address collateralAsset,
     address borrowedAsset,
+    address depositAsset,
     address user,
     uint256 debtToCover,
     bool useEthPath,
@@ -155,9 +161,25 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
     // Allow repay of flash loan
     IERC20(borrowedAsset).approve(address(LENDING_POOL), vars.flashLoanDebt);
 
-    // Transfer remaining tokens to initiator
+    // Swap remaining corrateral asset to deposit token
     if (vars.remainingTokens > 0) {
-      IERC20(collateralAsset).transfer(initiator, vars.remainingTokens);
+      if (collateralAsset != depositAsset){
+        vars.boughtAmount = _swapExactTokensForTokens(
+          collateralAsset,
+          depositAsset,
+          vars.remainingTokens,
+          100000000,
+          useEthPath
+        );
+      }
+      // Allow this contract to deposit depositAsset
+      vars.aToken = _getReserveData(depositAsset).aTokenAddress;
+      IERC20(depositAsset).safeApprove(address(LENDING_POOL), 0);
+      IERC20(depositAsset).safeApprove(address(LENDING_POOL), vars.boughtAmount);
+      console.log("approved");
+      LENDING_POOL.deposit(depositAsset, vars.boughtAmount, initiator, 0);
+      uint256 aTokenBalance = IERC20(vars.aToken).balanceOf(address(this));
+      console.log("aTokenBalance:", aTokenBalance);
     }
   }
 
@@ -166,6 +188,7 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
    * @param params Additional variadic field to include extra params. Expected parameters:
    *   address collateralAsset The collateral asset to claim
    *   address borrowedAsset The asset that must be covered and will be exchanged to pay the flash loan premium
+   *   address depositAsset The asset to deposit after the self-liquidation 
    *   address user The user address with a Health Factor below 1
    *   uint256 debtToCover The amount of debt to cover
    *   bool useEthPath Use WETH as connector path between the collateralAsset and borrowedAsset at Uniswap
@@ -175,12 +198,13 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
     (
       address collateralAsset,
       address borrowedAsset,
+      address depositAsset,
       address user,
       uint256 debtToCover,
       bool useEthPath
-    ) = abi.decode(params, (address, address, address, uint256, bool));
+    ) = abi.decode(params, (address, address, address, address, uint256, bool));
 
-    return LiquidationParams(collateralAsset, borrowedAsset, user, debtToCover, useEthPath);
+    return LiquidationParams(collateralAsset, borrowedAsset, depositAsset, user, debtToCover, useEthPath);
   }
 
   function requestFlashLoan(
@@ -202,11 +226,12 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
 
     LiquidationParams memory decodedParams = _decodeParams(params);
 
-    // Transfer the remaining collateral to the msg.sender
-    uint256 allBalance = IERC20(decodedParams.collateralAsset).balanceOf(address(this));
-    console.log(decodedParams.collateralAsset, allBalance);
-    IERC20(decodedParams.collateralAsset).transfer(msg.sender, allBalance);
-    uint256 userBalance = IERC20(decodedParams.collateralAsset).balanceOf(msg.sender);
-    console.log('user bal', userBalance);
+    // Transfer aToken to the msg.sender
+    address aToken = _getReserveData(decodedParams.depositAsset).aTokenAddress;
+    uint256 aTokenBalance = IERC20(aToken).balanceOf(address(this));
+    console.log(aToken, ":", aTokenBalance);
+    IERC20(aToken).transfer(msg.sender, aTokenBalance);
+    uint256 aTokenUser = IERC20(aToken).balanceOf(msg.sender);
+    console.log(msg.sender, "'s balance:", aTokenUser);
   }
 }

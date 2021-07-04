@@ -19,9 +19,15 @@ const iconStyle = { height: 24, width: 24 };
 
 // Prices  Feb-23-2021 09:01:06 AM +UTC for liquidation overview
 const assetData = {
+  WBTC: {
+    price: 1,
+    address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+    img: "https://etherscan.io/token/images/wbtc_28.png",
+  },
   WETH: {
     price: 1508,
     aTokenImg: "https://etherscan.io/token/images/Aave_aWETH_32.png",
+    address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
   },
   LINK: {
     price: 25.3,
@@ -213,6 +219,7 @@ export default function Main({
               const encodedParams = buildFlashLiquidationAdapterParams(
                 assetData.LINK.address,
                 assetData.DAI.address,
+                assetData.WBTC.address,
                 BORROWER_ADDRESS,
                 daiDebt,
                 true,
@@ -227,7 +234,7 @@ export default function Main({
               tx(writeContracts.FlashLiquidationAdapter.requestFlashLoan(...flashLoanParams));
             }}
           >
-            Liquidate Position ⚡
+            Liquidate Position and Deposit WBTC⚡
           </Button>
         </div>
         <Divider />
