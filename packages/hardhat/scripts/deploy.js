@@ -1,7 +1,9 @@
 /* eslint no-use-before-define: "warn" */
 const fs = require("fs");
 const chalk = require("chalk");
+// USE hardhat Runtime environment's ethers for deploy and contract
 const { config, ethers } = require("hardhat");
+// only utils for parseEther 
 const { utils } = require("ethers");
 const R = require("ramda");
 
