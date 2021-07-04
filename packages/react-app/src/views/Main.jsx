@@ -19,10 +19,10 @@ const iconStyle = { height: 24, width: 24 };
 
 // Prices  Feb-23-2021 09:01:06 AM +UTC for liquidation overview
 const assetData = {
-  WBTC: {
+  USDT: {
     price: 1,
-    address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-    img: "https://etherscan.io/token/images/wbtc_28.png",
+    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    img: "https://etherscan.io/token/images/tether_32.png",
   },
   WETH: {
     price: 1508,
@@ -64,19 +64,19 @@ const loadReserves = async (userAddress, poolDataProvider) => {
     aTokens: allUserReserves
       .filter(tuple => {
         const [, [aTokenBalance, ,]] = tuple;
-        return aTokenBalance > 0.001;
+        return aTokenBalance > 0.0001;
       })
       .map(([symbol, [aToken]]) => [symbol, aToken]),
     stables: allUserReserves
       .filter(tuple => {
         const [, [, stable]] = tuple;
-        return stable > 0.001;
+        return stable > 0.0001;
       })
       .map(([symbol, [, stable]]) => [symbol, stable]),
     variables: allUserReserves
       .filter(tuple => {
         const [, [, , variable]] = tuple;
-        return variable > 0.001;
+        return variable > 0.0001;
       })
       .map(([symbol, [, , variable]]) => [symbol, variable]),
   };
@@ -135,6 +135,7 @@ export default function Main({
   useEffect(() => {
     const loadEffect = async () => {
       const { aTokens, stables, variables } = await loadReserves(BORROWER_ADDRESS, POOL_DATA_PROVIDER);
+      console.log("stables:", stables);
       setUserReserves(aTokens);
       setUserStable(stables);
       setUserVariable(variables);
@@ -219,7 +220,7 @@ export default function Main({
               const encodedParams = buildFlashLiquidationAdapterParams(
                 assetData.LINK.address,
                 assetData.DAI.address,
-                assetData.WBTC.address,
+                assetData.USDT.address,
                 BORROWER_ADDRESS,
                 daiDebt,
                 true,
@@ -234,7 +235,7 @@ export default function Main({
               tx(writeContracts.FlashLiquidationAdapter.requestFlashLoan(...flashLoanParams));
             }}
           >
-            Liquidate Position and Deposit WBTC⚡
+            Liquidate Position and Deposit USDT⚡
           </Button>
         </div>
         <Divider />

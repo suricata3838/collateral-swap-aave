@@ -168,18 +168,18 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
           collateralAsset,
           depositAsset,
           vars.remainingTokens,
-          100000000,
+          40000000000,
           useEthPath
         );
       }
+      console.log("boughtAmount:", vars.boughtAmount);
       // Allow this contract to deposit depositAsset
       vars.aToken = _getReserveData(depositAsset).aTokenAddress;
       IERC20(depositAsset).safeApprove(address(LENDING_POOL), 0);
       IERC20(depositAsset).safeApprove(address(LENDING_POOL), vars.boughtAmount);
-      console.log("approved");
-      LENDING_POOL.deposit(depositAsset, vars.boughtAmount, initiator, 0);
-      uint256 aTokenBalance = IERC20(vars.aToken).balanceOf(address(this));
-      console.log("aTokenBalance:", aTokenBalance);
+      LENDING_POOL.deposit(depositAsset, vars.boughtAmount, user, 0);
+      uint256 aTokenUser= IERC20(vars.aToken).balanceOf(user);
+      console.log("aTokenUser:", aTokenUser);
     }
   }
 
@@ -228,10 +228,7 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
 
     // Transfer aToken to the msg.sender
     address aToken = _getReserveData(decodedParams.depositAsset).aTokenAddress;
-    uint256 aTokenBalance = IERC20(aToken).balanceOf(address(this));
-    console.log(aToken, ":", aTokenBalance);
-    IERC20(aToken).transfer(msg.sender, aTokenBalance);
-    uint256 aTokenUser = IERC20(aToken).balanceOf(msg.sender);
-    console.log(msg.sender, "'s balance:", aTokenUser);
+    uint256 aTokenUser = IERC20(aToken).balanceOf(decodedParams.user);
+    console.log(decodedParams.user, "'s balance:", aTokenUser);
   }
 }
