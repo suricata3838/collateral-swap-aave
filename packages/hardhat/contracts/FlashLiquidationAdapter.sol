@@ -160,6 +160,10 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
 
     // Allow repay of flash loan
     IERC20(borrowedAsset).approve(address(LENDING_POOL), vars.flashLoanDebt);
+    console.log("remainingAsset:", collateralAsset);
+    console.log("remainingBalance:", vars.remainingTokens);
+    console.log("remainingAssetDecimals", _getDecimals(collateralAsset));
+    console.log("remainingAssetPrice", _getPrice(collateralAsset));
 
     // Swap remaining corrateral asset to deposit token
     if (vars.remainingTokens > 0) {
@@ -172,6 +176,10 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
           useEthPath
         );
       }
+      console.log("depositAsset:", depositAsset);
+      //NOTE: the decimal of USDT is 6! not 18!!!
+      console.log("depositAssetDecimal:", _getDecimals(depositAsset));
+      console.log("depositAssetPrice:", _getPrice(depositAsset));
       console.log("boughtAmount:", vars.boughtAmount);
       // Allow this contract to deposit depositAsset
       vars.aToken = _getReserveData(depositAsset).aTokenAddress;

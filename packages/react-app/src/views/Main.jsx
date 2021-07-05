@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, List, Divider, Alert } from "antd";
 import { Address, Balance, TokenBalance } from "../components";
-import { parseEther, formatEther } from "@ethersproject/units";
+import { parseEther, formatEther, formatUnits } from "@ethersproject/units";
 import { DAI_ABI as ERC20_ABI, AAVE_LENDING_POOL_ABI, PROTOCOL_DATA_PROVIDER_ABI } from "../constants";
 import { useContractReader, useExternalContractLoader } from "../hooks";
 import { buildFlashLiquidationAdapterParams } from "../helpers/encoder";
@@ -19,13 +19,21 @@ const iconStyle = { height: 24, width: 24 };
 
 // Prices  Feb-23-2021 09:01:06 AM +UTC for liquidation overview
 const assetData = {
+  USDC: {
+    price: 1,
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    img: "https://etherscan.io/token/images/centre-usdc_28.png",
+    aTokenImg: "https://etherscan.io/token/images/centre-usdc_28.png",
+  },
   USDT: {
     price: 1,
     address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     img: "https://etherscan.io/token/images/tether_32.png",
+    aTokenImg: "https://etherscan.io/token/images/tether_32.png",
   },
   WETH: {
     price: 1508,
+    img: "https://etherscan.io/token/images/Aave_aWETH_32.png",
     aTokenImg: "https://etherscan.io/token/images/Aave_aWETH_32.png",
     address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
   },
@@ -49,6 +57,15 @@ const loadReserves = async (userAddress, poolDataProvider) => {
 
   const allUserReserves = await Promise.all(
     allReserves.map(async reserveAddress => {
+      if (reserveAddress[0] == "USDT") {
+        //TODO: the units of USDT is 6!!
+        return [
+          "USDT", 
+          (await poolDataProvider.getUserReserveData(reserveAddress[1], userAddress))
+            .slice(0, 3)
+            .map(x => parseFloat(formatUnits(x, 6))),
+        ]
+      }
       return [
         reserveAddress[0],
         (await poolDataProvider.getUserReserveData(reserveAddress[1], userAddress))
@@ -58,25 +75,23 @@ const loadReserves = async (userAddress, poolDataProvider) => {
     }),
   );
 
-  console.log("allUserResearves:", allUserReserves);
-
   return {
     aTokens: allUserReserves
       .filter(tuple => {
         const [, [aTokenBalance, ,]] = tuple;
-        return aTokenBalance > 0.0001;
+        return aTokenBalance > 0.01;
       })
       .map(([symbol, [aToken]]) => [symbol, aToken]),
     stables: allUserReserves
       .filter(tuple => {
         const [, [, stable]] = tuple;
-        return stable > 0.0001;
+        return stable > 0.01;
       })
       .map(([symbol, [, stable]]) => [symbol, stable]),
     variables: allUserReserves
       .filter(tuple => {
         const [, [, , variable]] = tuple;
-        return variable > 0.0001;
+        return variable > 0.01;
       })
       .map(([symbol, [, , variable]]) => [symbol, variable]),
   };
@@ -235,7 +250,7 @@ export default function Main({
               tx(writeContracts.FlashLiquidationAdapter.requestFlashLoan(...flashLoanParams));
             }}
           >
-            Liquidate Position and Deposit USDT⚡
+            Liquidate Position and Borrow USDT⚡
           </Button>
         </div>
         <Divider />
